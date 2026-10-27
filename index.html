@@ -158,18 +158,7 @@ input{flex:1;min-width:0;background:var(--key);border:1px solid var(--key-hi);co
 
   let ws = null, pointer = null, msgId = 0, muted = false, pending = {};
 
-  const REG = {
-    forcePairing:false, pairingType:'PROMPT',
-    manifest:{ appVersion:'1.1', manifestVersion:1, permissions:[
-      'APP_TO_APP','CLOSE','CONTROL_AUDIO','CONTROL_DISPLAY','CONTROL_INPUT_JOYSTICK',
-      'CONTROL_INPUT_MEDIA_PLAYBACK','CONTROL_INPUT_MEDIA_RECORDING','CONTROL_INPUT_TEXT','CONTROL_INPUT_TV',
-      'CONTROL_MOUSE_AND_KEYBOARD','CONTROL_POWER','CONTROL_TV_SCREEN','LAUNCH','LAUNCH_WEBAPP',
-      'READ_APP_STATUS','READ_CURRENT_CHANNEL','READ_INPUT_DEVICE_LIST','READ_INSTALLED_APPS',
-      'READ_LGE_TV_INPUT_EVENTS','READ_NETWORK_STATE','READ_POWER_STATE','READ_RUNNING_APPS',
-      'READ_SETTINGS','READ_TV_CHANNEL_LIST','READ_TV_CURRENT_TIME','READ_UPDATE_INFO',
-      'WRITE_NOTIFICATION_TOAST','WRITE_SETTINGS'
-    ]}
-  };
+  const REG = {"forcePairing": false, "pairingType": "PROMPT", "manifest": {"manifestVersion": 1, "appVersion": "1.1", "signed": {"created": "20140509", "appId": "com.lge.test", "vendorId": "com.lge", "localizedAppNames": {"": "LG Remote App"}, "localizedVendorNames": {"": "LG Electronics"}, "permissions": ["TEST_SECURE", "CONTROL_INPUT_TEXT", "CONTROL_MOUSE_AND_KEYBOARD", "READ_INSTALLED_APPS", "READ_LGE_SDX", "READ_NOTIFICATIONS", "SEARCH", "WRITE_SETTINGS", "WRITE_NOTIFICATION_ALERT", "CONTROL_POWER", "READ_CURRENT_CHANNEL", "READ_RUNNING_APPS", "READ_UPDATE_INFO", "UPDATE_FROM_REMOTE_APP", "READ_LGE_TV_INPUT_EVENTS", "READ_TV_CURRENT_TIME"], "serial": "2f930e2d2cfe083771f68e4fe7bb07"}, "permissions": ["LAUNCH", "LAUNCH_WEBAPP", "APP_TO_APP", "CLOSE", "TEST_OPEN", "TEST_PROTECTED", "CONTROL_AUDIO", "CONTROL_DISPLAY", "CONTROL_INPUT_JOYSTICK", "CONTROL_INPUT_MEDIA_RECORDING", "CONTROL_INPUT_MEDIA_PLAYBACK", "CONTROL_INPUT_TV", "CONTROL_POWER", "READ_APP_STATUS", "READ_CURRENT_CHANNEL", "READ_INPUT_DEVICE_LIST", "READ_NETWORK_STATE", "READ_RUNNING_APPS", "READ_TV_CHANNEL_LIST", "WRITE_NOTIFICATION_TOAST", "READ_POWER_STATE", "READ_COUNTRY_INFO"], "signatures": [{"signatureVersion": 1, "signature": "eyJhbGdvcml0aG0iOiJSU0EtU0hBMjU2Iiwia2V5SWQiOiJ0ZXN0LXNpZ25pbmctY2VydCIsInNpZ25hdHVyZVZlcnNpb24iOjF9.hrVRgjCwXVvE2OOSpDZ58hR+59aFNwYDyjQgKk3auukd7pcegmE2CzPCa0bJ0ZsRAcKkCTJrWo5iDzNhMBWRyaMOv5zWSrthlf7G128qvIlpMT0YNY+n/FaOHE73uLrS/g7swl3/qH/BGFG2Hu4RlL48eb3lLKqTt2xKHdCs6Cd4RMfJPYnzgvI4BNrFUKsjkcu+WD4OO2A27Pq1n50cMchmcaXadJhGrOqH5YmHdOCj5NSHzJYrsW0HPlpuAx/ECMeIZYDh6RMqaFM2DXzdKX9NmmyqzJ3o/0lkk/N97gfVRLW5hA29yeAwaCViZNCP8iC9aO0q9fQojoa7NQnAtw=="}]}};
 
   function status(text, state){ $('#stat').textContent = text; $('#dot').className = 'dot' + (state ? ' ' + state : ''); }
   let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2200); }
@@ -219,8 +208,11 @@ input{flex:1;min-width:0;background:var(--key);border:1px solid var(--key-hi);co
         if (m.payload && m.payload['client-key']) { store.set('lg_key_' + ip, m.payload['client-key']); $('#key').value = m.payload['client-key']; }
         status('Connesso','on'); $('#setup').hidden = true; openPointer();
         send('ssap://audio/getStatus', {}, p => { if (p && 'mute' in p) muted = p.mute; });
+      } else if (m.id === 'reg0' && m.type === 'response') {
+        status('Guarda la TV e premi Accetta','wait');
       } else if (m.type === 'error' && m.id === 'reg0') {
-        status('Rifiutato dalla TV',''); toast('Richiesta rifiutata o scaduta: riprova e premi Accetta');
+        status('TV: ' + (m.error || 'rifiutato'),''); toast('La TV ha risposto: ' + (m.error || 'rifiutato'));
+        if (String(m.error||'').includes('401') || String(m.error||'').toLowerCase().includes('cancel')) { try { localStorage.removeItem('lg_key_' + ip) } catch {} }
       } else if (m.id && pending[m.id]) {
         const cb = pending[m.id]; delete pending[m.id]; cb(m.payload);
       }
@@ -230,7 +222,12 @@ input{flex:1;min-width:0;background:var(--key);border:1px solid var(--key-hi);co
       toast(secure ? 'Apri prima https://' + ip + ':3001 e accetta il certificato' : 'Controlla IP e che la TV sia accesa sulla stessa rete');
       if (secure) { $('#certHint').hidden = false; $('#setup').hidden = false; }
     };
-    ws.onclose = () => { if ($('#dot').classList.contains('on')) status('Disconnesso',''); pointer = null; };
+    ws.onclose = e => {
+      const d = $('#dot').classList;
+      if (d.contains('on')) status('Disconnesso','');
+      else if (d.contains('wait')) status('La TV ha chiuso la connessione (' + e.code + ')','');
+      pointer = null;
+    };
   }
 
   // pulsanti
