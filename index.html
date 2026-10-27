@@ -81,7 +81,7 @@ input{flex:1;min-width:0;background:var(--key);border:1px solid var(--key-hi);co
   <section class="setup" id="setup">
     <label for="ip">Indirizzo IP della TV</label>
     <div class="row">
-      <input id="ip" inputmode="decimal" placeholder="192.168.1.50" autocomplete="off">
+      <input id="ip" inputmode="decimal" placeholder="192.168.1.138" autocomplete="off">
       <button class="btn" id="connect">Connetti</button>
     </div>
     <p class="hint">L'IP lo trovi sulla TV in <b>Impostazioni → Tutte le impostazioni → Rete → Connessione Wi‑Fi/cablata</b>. Alla prima connessione sulla TV compare una richiesta: premi <b>Accetta</b> col telecomando vero.</p>
@@ -252,7 +252,7 @@ input{flex:1;min-width:0;background:var(--key);border:1px solid var(--key-hi);co
   $('#toggleSetup').addEventListener('click', () => { $('#setup').hidden = !$('#setup').hidden; });
   if (secure) $('#certHint').hidden = false;
 
-  const saved = store.get('lg_ip');
+  const saved = store.get('lg_ip') || '192.168.1.138';
   if (saved) { $('#ip').value = saved; $('#ip').dispatchEvent(new Event('input')); connect(); }
 })();
 </script>
