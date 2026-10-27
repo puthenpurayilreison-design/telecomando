@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Telecomando">
+<meta name="theme-color" content="#121316">
+<title>Telecomando LG</title>
+<style>
+/* Layout: una colonna stretta a forma di telecomando, tasti grandi per il pollice */
+:root{
+  --bg:#121316; --body:#1c1e23; --key:#2a2d34; --key-hi:#353943; --fg:#eef0f4; --dim:#8b909c;
+  --accent:#e2a33a; --danger:#d9534f; --ok:#4caf7a;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-user-select:none;user-select:none}
+.wrap{max-width:380px;margin:0 auto;padding-block:14px 24px;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--danger);flex:none}
+.dot.on{background:var(--ok)} .dot.wait{background:var(--accent)}
+.link{background:none;border:0;color:var(--accent);font:inherit;font-size:13px;padding:6px}
+.setup{background:var(--body);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.setup label{font-size:12px;color:var(--dim);letter-spacing:.04em;text-transform:uppercase}
+.row{display:flex;gap:8px}
+input{flex:1;min-width:0;background:var(--key);border:1px solid var(--key-hi);color:var(--fg);border-radius:10px;
+  padding:11px 12px;font:inherit;font-size:16px}
+.btn{background:var(--accent);color:#1b1408;border:0;border-radius:10px;padding:11px 16px;font:inherit;font-weight:600}
+.hint{font-size:12.5px;color:var(--dim);line-height:1.45;margin:0}
+.hint a{color:var(--accent)}
+.remote{background:var(--body);border-radius:28px;padding:20px 18px 24px;display:flex;flex-direction:column;gap:20px}
+.k{background:var(--key);color:var(--fg);border:0;border-radius:14px;font:inherit;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:6px;min-height:52px;touch-action:manipulation;
+  transition:transform .06s,background .06s}
+.k:active,.k.press{background:var(--key-hi);transform:scale(.95)}
+.k svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.k small{font-size:11px;color:var(--dim);font-weight:500}
+.top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.power{background:var(--danger);color:#fff}
+.dpad{position:relative;width:min(260px,100%);aspect-ratio:1;margin:0 auto;border-radius:50%;background:var(--key);
+  display:grid;grid-template:1fr 1.15fr 1fr/1fr 1.15fr 1fr}
+.dpad button{background:none;border:0;color:var(--fg);display:flex;align-items:center;justify-content:center;touch-action:manipulation}
+.dpad button svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.dpad button:active svg{color:var(--accent)}
+.dpad .up{grid-area:1/2} .dpad .down{grid-area:3/2} .dpad .left{grid-area:2/1} .dpad .right{grid-area:2/3}
+.dpad .ok{grid-area:2/2;border-radius:50%;background:var(--key-hi);font-weight:700;font-size:17px;color:var(--fg);margin:4px}
+.dpad .ok:active{background:var(--accent);color:#1b1408}
+.nav{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.rockers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:stretch}
+.rocker{display:flex;flex-direction:column;background:var(--key);border-radius:18px;overflow:hidden}
+.rocker .k{border-radius:0;background:transparent;min-height:58px}
+.rocker .k:active{background:var(--key-hi)}
+.rocker .lab{text-align:center;font-size:11px;letter-spacing:.08em;color:var(--dim);padding:2px 0}
+.mid{display:flex;flex-direction:column;gap:10px}
+.mid .k{flex:1}
+.media{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  background:var(--key-hi);color:var(--fg);padding:10px 16px;border-radius:12px;font-size:13.5px;max-width:90vw;
+  opacity:0;transition:opacity .2s;pointer-events:none;text-align:center}
+.toast.show{opacity:1}
+.k:focus-visible,.dpad button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.k{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="status"><span class="dot" id="dot"></span><span id="stat">Non connesso</span></div>
+    <button class="link" id="toggleSetup">Impostazioni</button>
+  </header>
+
+  <section class="setup" id="setup">
+    <label for="ip">Indirizzo IP della TV</label>
+    <div class="row">
+      <input id="ip" inputmode="decimal" placeholder="192.168.1.50" autocomplete="off">
+      <button class="btn" id="connect">Connetti</button>
+    </div>
+    <p class="hint">L'IP lo trovi sulla TV in <b>Impostazioni → Tutte le impostazioni → Rete → Connessione Wi‑Fi/cablata</b>. Alla prima connessione sulla TV compare una richiesta: premi <b>Accetta</b> col telecomando vero.</p>
+    <p class="hint" id="certHint" hidden>Pagina in HTTPS: prima apri <a id="certLink" target="_blank" rel="noopener">https://IP:3001</a> in Safari, tocca <b>Mostra dettagli → visita questo sito web</b>, poi torna qui e premi Connetti.</p>
+  </section>
+
+  <main class="remote">
+    <div class="top">
+      <button class="k power" data-ssap="ssap://system/turnOff" aria-label="Spegni">
+        <svg viewBox="0 0 24 24"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>
+      </button>
+      <button class="k" data-btn="HOME" aria-label="Home">
+        <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7"/><path d="M6 10v10h12V10"/></svg>
+      </button>
+      <button class="k" data-btn="MENU" aria-label="Impostazioni">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>
+      </button>
+    </div>
+
+    <div class="dpad">
+      <button class="up" data-btn="UP" aria-label="Su"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>
+      <button class="left" data-btn="LEFT" aria-label="Sinistra"><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button>
+      <button class="ok" data-btn="ENTER">OK</button>
+      <button class="right" data-btn="RIGHT" aria-label="Destra"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
+      <button class="down" data-btn="DOWN" aria-label="Giù"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+    </div>
+
+    <div class="rockers">
+      <div class="rocker">
+        <button class="k" data-ssap="ssap://audio/volumeUp" data-repeat aria-label="Volume su"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        <div class="lab">VOL</div>
+        <button class="k" data-ssap="ssap://audio/volumeDown" data-repeat aria-label="Volume giù"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+      </div>
+      <div class="mid">
+        <button class="k" id="mute" aria-label="Muto">
+          <svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m17 9 4 6M21 9l-4 6"/></svg>
+        </button>
+        <button class="k" data-btn="BACK" aria-label="Indietro">
+          <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+        </button>
+      </div>
+      <div class="rocker">
+        <button class="k" data-ssap="ssap://tv/channelUp" aria-label="Canale su"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>
+        <div class="lab">CH</div>
+        <button class="k" data-ssap="ssap://tv/channelDown" aria-label="Canale giù"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+    </div>
+
+    <div class="media">
+      <button class="k" data-ssap="ssap://media.controls/rewind" aria-label="Indietro veloce"><svg viewBox="0 0 24 24"><path d="M11 6 4 12l7 6zM20 6l-7 6 7 6z"/></svg></button>
+      <button class="k" data-ssap="ssap://media.controls/play" aria-label="Play"><svg viewBox="0 0 24 24"><path d="M7 5v14l11-7z"/></svg></button>
+      <button class="k" data-ssap="ssap://media.controls/pause" aria-label="Pausa"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
+      <button class="k" data-ssap="ssap://media.controls/fastForward" aria-label="Avanti veloce"><svg viewBox="0 0 24 24"><path d="m13 6 7 6-7 6zM4 6l7 6-7 6z"/></svg></button>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const store = {
+    get(k){ try { return localStorage.getItem(k) } catch { return null } },
+    set(k,v){ try { localStorage.setItem(k,v) } catch {} }
+  };
+  const secure = location.protocol === 'https:';
+  const PORT = secure ? 3001 : 3000, PROTO = secure ? 'wss' : 'ws';
+
+  let ws = null, pointer = null, msgId = 0, muted = false, pending = {};
+
+  const REG = {
+    forcePairing:false, pairingType:'PROMPT',
+    manifest:{ appVersion:'1.1', manifestVersion:1, permissions:[
+      'APP_TO_APP','CLOSE','CONTROL_AUDIO','CONTROL_DISPLAY','CONTROL_INPUT_JOYSTICK',
+      'CONTROL_INPUT_MEDIA_PLAYBACK','CONTROL_INPUT_MEDIA_RECORDING','CONTROL_INPUT_TEXT','CONTROL_INPUT_TV',
+      'CONTROL_MOUSE_AND_KEYBOARD','CONTROL_POWER','CONTROL_TV_SCREEN','LAUNCH','LAUNCH_WEBAPP',
+      'READ_APP_STATUS','READ_CURRENT_CHANNEL','READ_INPUT_DEVICE_LIST','READ_INSTALLED_APPS',
+      'READ_LGE_TV_INPUT_EVENTS','READ_NETWORK_STATE','READ_POWER_STATE','READ_RUNNING_APPS',
+      'READ_SETTINGS','READ_TV_CHANNEL_LIST','READ_TV_CURRENT_TIME','READ_UPDATE_INFO',
+      'WRITE_NOTIFICATION_TOAST','WRITE_SETTINGS'
+    ]}
+  };
+
+  function status(text, state){ $('#stat').textContent = text; $('#dot').className = 'dot' + (state ? ' ' + state : ''); }
+  let tt; function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2200); }
+
+  function send(uri, payload, cb){
+    if (!ws || ws.readyState !== 1) { toast('Non connesso alla TV'); return; }
+    const id = 'm' + (++msgId);
+    if (cb) pending[id] = cb;
+    ws.send(JSON.stringify({ type:'request', id, uri, payload: payload || {} }));
+  }
+
+  function openPointer(){
+    send('ssap://com.webos.service.networkinput/getPointerInputSocket', {}, p => {
+      if (!p || !p.socketPath) return;
+      let path = p.socketPath;
+      if (secure) path = path.replace(/^ws:/,'wss:').replace(':3000',':3001');
+      pointer = new WebSocket(path);
+      pointer.onclose = () => { pointer = null; };
+    });
+  }
+
+  function button(name){
+    if (pointer && pointer.readyState === 1) pointer.send('type:button\nname:' + name + '\n\n');
+    else { toast('Tasti non pronti, riprovo…'); openPointer(); }
+  }
+
+  function connect(){
+    const ip = $('#ip').value.trim();
+    if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) { toast('Scrivi un IP valido, es. 192.168.1.50'); return; }
+    store.set('lg_ip', ip);
+    try { ws && ws.close(); } catch {}
+    status('Connessione…','wait');
+    try { ws = new WebSocket(`${PROTO}://${ip}:${PORT}`); }
+    catch { status('Errore','') ; return; }
+
+    ws.onopen = () => {
+      const key = store.get('lg_key_' + ip);
+      const payload = Object.assign({}, REG, key ? { 'client-key': key } : {});
+      ws.send(JSON.stringify({ type:'register', id:'reg0', payload }));
+      if (!key) status('Accetta sulla TV…','wait');
+    };
+    ws.onmessage = e => {
+      let m; try { m = JSON.parse(e.data) } catch { return; }
+      if (m.type === 'registered') {
+        if (m.payload && m.payload['client-key']) store.set('lg_key_' + ip, m.payload['client-key']);
+        status('Connesso','on'); $('#setup').hidden = true; openPointer();
+        send('ssap://audio/getStatus', {}, p => { if (p && 'mute' in p) muted = p.mute; });
+      } else if (m.type === 'error' && m.id === 'reg0') {
+        status('Rifiutato dalla TV',''); toast('Richiesta rifiutata o scaduta: riprova e premi Accetta');
+      } else if (m.id && pending[m.id]) {
+        const cb = pending[m.id]; delete pending[m.id]; cb(m.payload);
+      }
+    };
+    ws.onerror = () => {
+      status('Impossibile raggiungere la TV','');
+      toast(secure ? 'Apri prima https://' + ip + ':3001 e accetta il certificato' : 'Controlla IP e che la TV sia accesa sulla stessa rete');
+      if (secure) { $('#certHint').hidden = false; $('#setup').hidden = false; }
+    };
+    ws.onclose = () => { if ($('#dot').classList.contains('on')) status('Disconnesso',''); pointer = null; };
+  }
+
+  // pulsanti
+  function press(el){
+    if (navigator.vibrate) navigator.vibrate(8);
+    if (el.dataset.btn) button(el.dataset.btn);
+    else if (el.dataset.ssap) {
+      send(el.dataset.ssap);
+      if (el.dataset.ssap.endsWith('turnOff')) toast('Spengo la TV');
+    }
+  }
+  document.querySelectorAll('[data-btn],[data-ssap]').forEach(el => {
+    let rep, delay;
+    const stop = () => { clearTimeout(delay); clearInterval(rep); };
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault(); press(el);
+      if (el.hasAttribute('data-repeat')) delay = setTimeout(() => rep = setInterval(() => press(el), 140), 400);
+    });
+    ['pointerup','pointerleave','pointercancel'].forEach(t => el.addEventListener(t, stop));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); press(el); } });
+  });
+  $('#mute').addEventListener('click', () => { muted = !muted; send('ssap://audio/setMute', { mute: muted }); });
+
+  $('#connect').addEventListener('click', connect);
+  $('#ip').addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
+  $('#ip').addEventListener('input', () => { $('#certLink').href = 'https://' + $('#ip').value.trim() + ':3001'; $('#certLink').textContent = 'https://' + ($('#ip').value.trim() || 'IP') + ':3001'; });
+  $('#toggleSetup').addEventListener('click', () => { $('#setup').hidden = !$('#setup').hidden; });
+  if (secure) $('#certHint').hidden = false;
+
+  const saved = store.get('lg_ip');
+  if (saved) { $('#ip').value = saved; $('#ip').dispatchEvent(new Event('input')); connect(); }
+})();
+</script>
+</body>
+</html>
